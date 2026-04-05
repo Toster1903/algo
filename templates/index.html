@@ -32,6 +32,9 @@
       <label for="roundsInput">Количество тестов</label>
       <input id="roundsInput" type="number" min="10" max="300" value="80">
 
+      <label for="testTaskCountInput">Сколько задач в тесте</label>
+      <input id="testTaskCountInput" type="number" min="1" max="79" value="5">
+
       <div class="controls-row">
         <button id="hintBtn" type="button">Подсказка</button>
         <button id="startTestBtn" type="button">Начать тест</button>
@@ -44,8 +47,9 @@
     </section>
 
     <section class="panel editor-panel">
-      <label for="codeInput">Твой код</label>
-      <textarea id="codeInput" spellcheck="false" wrap="off"></textarea>
+      <label for="codeEditor">Твой код</label>
+      <div id="codeEditor" aria-label="Твой код"></div>
+      <p id="syntaxStatus" class="hint syntax-status">Синтаксис: проверка...</p>
     </section>
 
     <section class="panel result-panel">
@@ -54,6 +58,8 @@
     </section>
   </main>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.6/ace.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.6/ext-language_tools.min.js"></script>
   <script src="/static/app.js"></script>
 </body>
 </html>

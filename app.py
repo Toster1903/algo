@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import copy
 import multiprocessing as mp
 import os
@@ -922,6 +923,28 @@ def api_run():
         }
     )
     return jsonify(result), (200 if result.get("ok") else 400)
+
+
+@app.post("/api/syntax-check")
+def api_syntax_check():
+    payload = request.get_json(force=True, silent=True) or {}
+    code = payload.get("code", "")
+    if not isinstance(code, str):
+        return jsonify({"ok": False, "error": "Некорректный код"}), 400
+
+    try:
+        ast.parse(code)
+    except SyntaxError as exc:
+        return jsonify(
+            {
+                "ok": False,
+                "error": exc.msg or "SyntaxError",
+                "line": exc.lineno or 1,
+                "column": exc.offset or 1,
+            }
+        )
+
+    return jsonify({"ok": True})
 
 
 if __name__ == "__main__":

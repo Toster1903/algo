@@ -36,15 +36,30 @@ body {
   position: relative;
   z-index: 1;
   width: min(1200px, 95vw);
+  min-height: calc(100vh - 4rem);
   margin: 2rem auto;
-  display: grid;
+  display: flex;
   gap: 1rem;
-  grid-template-columns: 320px 1fr 340px;
   animation: rise 460ms ease-out;
 }
 
+.left-panel {
+  width: 320px;
+  flex: 0 0 320px;
+}
+
 .editor-panel {
+  width: 1px;
+  flex: 1 1 auto;
+  resize: horizontal;
+  overflow: auto;
   min-width: 420px;
+  max-width: 70vw;
+}
+
+.result-panel {
+  width: 340px;
+  flex: 0 0 340px;
 }
 
 .panel {
@@ -77,7 +92,6 @@ label {
 
 select,
 input,
-textarea,
 button {
   width: 100%;
   border-radius: 10px;
@@ -92,13 +106,27 @@ textarea {
   background: rgba(255, 255, 255, 0.86);
 }
 
-textarea {
+#codeEditor {
   min-height: 72vh;
-  resize: both;
-  overflow: auto;
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
   font-family: "IBM Plex Mono", monospace;
   font-size: 0.92rem;
   line-height: 1.45;
+}
+
+.syntax-status {
+  margin-top: 0.5rem;
+}
+
+.syntax-ok {
+  color: #2a6f3f;
+}
+
+.syntax-error {
+  color: #8b2f2f;
 }
 
 .task-description-wrap {
@@ -184,10 +212,24 @@ button:hover {
 
 @media (max-width: 1080px) {
   .app-shell {
+    display: grid;
     grid-template-columns: 1fr;
+    min-height: auto;
   }
 
-  textarea,
+  .left-panel,
+  .editor-panel,
+  .result-panel {
+    width: auto;
+    flex: initial;
+    max-width: none;
+  }
+
+  .editor-panel {
+    resize: none;
+  }
+
+  #codeEditor,
   .result-panel pre {
     min-height: 42vh;
   }

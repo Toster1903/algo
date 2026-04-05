@@ -3,7 +3,9 @@ const taskSignature = document.getElementById("taskSignature");
 const taskLimit = document.getElementById("taskLimit");
 const taskDescription = document.getElementById("taskDescription");
 const roundsInput = document.getElementById("roundsInput");
-const codeInput = document.getElementById("codeInput");
+const testTaskCountInput = document.getElementById("testTaskCountInput");
+const codeEditorEl = document.getElementById("codeEditor");
+const syntaxStatus = document.getElementById("syntaxStatus");
 const resultOutput = document.getElementById("resultOutput");
 const runBtn = document.getElementById("runBtn");
 const hintBtn = document.getElementById("hintBtn");
@@ -13,6 +15,107 @@ const testInfo = document.getElementById("testInfo");
 
 let tasks = [];
 let testSession = null;
+let editor = null;
+let syntaxTimer = null;
+
+function initEditor() {
+  if (!window.ace || !codeEditorEl) {
+    resultOutput.textContent = "Ошибка: редактор не загрузился.";
+    return;
+  }
+
+  editor = window.ace.edit("codeEditor");
+  editor.setTheme("ace/theme/chrome");
+  editor.session.setMode("ace/mode/python");
+  editor.setOptions({
+    fontFamily: "IBM Plex Mono",
+    fontSize: "14px",
+    tabSize: 4,
+    useSoftTabs: false,
+    showPrintMargin: false,
+    enableBasicAutocompletion: true,
+    enableLiveAutocompletion: false,
+    wrap: false,
+  });
+
+  editor.session.on("change", () => {
+    scheduleSyntaxCheck();
+  });
+
+  window.addEventListener("resize", () => {
+    editor.resize();
+  });
+}
+
+function getCode() {
+  return editor ? editor.getValue() : "";
+}
+
+function setCode(value) {
+  if (!editor) return;
+  editor.setValue(value, -1);
+  scheduleSyntaxCheck();
+}
+
+function setSyntaxOk(text = "Синтаксис: ошибок нет") {
+  if (!syntaxStatus) return;
+  syntaxStatus.textContent = text;
+  syntaxStatus.classList.remove("syntax-error");
+  syntaxStatus.classList.add("syntax-ok");
+  if (editor) {
+    editor.session.setAnnotations([]);
+  }
+}
+
+function setSyntaxError(msg, line, column) {
+  if (!syntaxStatus) return;
+  syntaxStatus.textContent = `Синтаксис: ${msg} (строка ${line}, позиция ${column})`;
+  syntaxStatus.classList.remove("syntax-ok");
+  syntaxStatus.classList.add("syntax-error");
+  if (editor) {
+    editor.session.setAnnotations([
+      {
+        row: Math.max(0, (line || 1) - 1),
+        column: Math.max(0, (column || 1) - 1),
+        text: msg,
+        type: "error",
+      },
+    ]);
+  }
+}
+
+async function checkSyntaxNow() {
+  const code = getCode();
+  if (!code.trim()) {
+    setSyntaxOk("Синтаксис: ожидаю код");
+    return;
+  }
+
+  try {
+    const res = await fetch("/api/syntax-check", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      setSyntaxOk();
+      return;
+    }
+    setSyntaxError(data.error || "SyntaxError", data.line || 1, data.column || 1);
+  } catch (_err) {
+    setSyntaxError("не удалось проверить код", 1, 1);
+  }
+}
+
+function scheduleSyntaxCheck() {
+  if (syntaxTimer) {
+    clearTimeout(syntaxTimer);
+  }
+  syntaxTimer = setTimeout(() => {
+    checkSyntaxNow();
+  }, 250);
+}
 
 function randomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
@@ -92,9 +195,9 @@ function showTask(task) {
   taskLimit.textContent = `Лимит на 1 тест: ${task.time_limit_ms} ms`;
   taskDescription.textContent = task.description || "Описание задачи не найдено.";
   if (task.task_kind === "class") {
-    codeInput.value = templateForClass(task.entry_name);
+    setCode(templateForClass(task.entry_name));
   } else {
-    codeInput.value = templateForSignature(task.signature);
+    setCode(templateForSignature(task.signature));
   }
 }
 
@@ -141,9 +244,8 @@ hintBtn.addEventListener("click", () => {
 
 startTestBtn.addEventListener("click", () => {
   if (!tasks.length) return;
-  const maxCount = Math.min(8, tasks.length);
-  const minCount = Math.min(3, maxCount);
-  const count = randomInt(minCount, maxCount);
+  const requested = Number(testTaskCountInput.value || 5);
+  const count = Math.max(1, Math.min(tasks.length, requested));
   const ids = shuffle(tasks.map((t) => t.id)).slice(0, count);
 
   testSession = { ids, index: 0 };
@@ -167,7 +269,7 @@ nextTaskBtn.addEventListener("click", () => {
 runBtn.addEventListener("click", async () => {
   const id = Number(taskSelect.value);
   const rounds = Number(roundsInput.value || 80);
-  const code = codeInput.value;
+  const code = getCode();
 
   resultOutput.textContent = "Запуск проверки...";
 
@@ -208,4 +310,5 @@ runBtn.addEventListener("click", async () => {
   }
 });
 
+initEditor();
 loadTasks();
