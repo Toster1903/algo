@@ -279,7 +279,16 @@ runBtn.addEventListener("click", async () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ task_id: id, rounds, code }),
     });
-    const data = await res.json();
+    const contentType = (res.headers.get("content-type") || "").toLowerCase();
+    let data;
+    if (contentType.includes("application/json")) {
+      data = await res.json();
+    } else {
+      const raw = await res.text();
+      const preview = raw.replace(/\s+/g, " ").slice(0, 220);
+      resultOutput.textContent = `Ошибка сервера (${res.status}). Ожидался JSON, но пришел другой ответ:\n${preview}`;
+      return;
+    }
 
     if (data.ok) {
       resultOutput.textContent = [

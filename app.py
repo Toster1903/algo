@@ -856,18 +856,18 @@ def eval_submission(payload: dict[str, Any]) -> dict[str, Any]:
     return eval_class_task(task, ref_class, user_class, rounds)
 
 
+def eval_submission_worker(conn, data):
+    try:
+        conn.send(eval_submission(data))
+    except Exception as exc:
+        conn.send({"ok": False, "error": f"Внутренняя ошибка: {exc}"})
+    finally:
+        conn.close()
+
+
 def run_eval_in_subprocess(payload: dict[str, Any], timeout_s: float = 10.0) -> dict[str, Any]:
     parent_conn, child_conn = mp.Pipe(duplex=False)
-
-    def worker(conn, data):
-        try:
-            conn.send(eval_submission(data))
-        except Exception as exc:
-            conn.send({"ok": False, "error": f"Внутренняя ошибка: {exc}"})
-        finally:
-            conn.close()
-
-    proc = mp.Process(target=worker, args=(child_conn, payload), daemon=True)
+    proc = mp.Process(target=eval_submission_worker, args=(child_conn, payload), daemon=True)
     proc.start()
     proc.join(timeout_s)
 
