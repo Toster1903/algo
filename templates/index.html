@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Algo Verifier</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="background-layer"></div>
+  <main class="app-shell">
+    <section class="panel left-panel">
+      <h1>Algo Verifier</h1>
+      <p class="subtitle">Вставляй решение, запускай рандомные тесты, смотри время.</p>
+
+      <label for="taskSelect">Задача</label>
+      <select id="taskSelect"></select>
+
+      <div class="task-meta">
+        <p id="taskSignature"></p>
+        <p id="taskLimit"></p>
+      </div>
+
+      <label for="roundsInput">Количество тестов</label>
+      <input id="roundsInput" type="number" min="10" max="300" value="80">
+
+      <button id="runBtn">Проверить</button>
+      <p class="hint">Подключены все задачи из zach.py (1-79).</p>
+    </section>
+
+    <section class="panel editor-panel">
+      <label for="codeInput">Твой код</label>
+      <textarea id="codeInput" spellcheck="false"></textarea>
+    </section>
+
+    <section class="panel result-panel">
+      <h2>Результат</h2>
+      <pre id="resultOutput">Ожидаю запуск проверки...</pre>
+    </section>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

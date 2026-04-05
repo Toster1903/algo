@@ -1,0 +1,9 @@
+services:
+  algo-verifier:
+    build: .
+    container_name: algo-verifier
+    ports:
+      - "${HOST_PORT:-5001}:5000"
+    environment:
+      - HOST=0.0.0.0
+      - PORT=5000
