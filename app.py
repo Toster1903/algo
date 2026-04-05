@@ -822,7 +822,7 @@ def eval_submission(payload: dict[str, Any]) -> dict[str, Any]:
     task_id = int(payload["task_id"])
     user_code = payload["code"]
     rounds = int(payload.get("rounds", 60))
-    rounds = max(5, min(rounds, 250))
+    rounds = max(5, min(rounds, 10000000))
 
     task = TASKS.get(task_id)
     if task is None:
