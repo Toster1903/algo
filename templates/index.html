@@ -24,16 +24,28 @@
         <p id="taskLimit"></p>
       </div>
 
+      <div class="task-description-wrap">
+        <p class="mini-title">Условие задачи</p>
+        <div id="taskDescription" class="task-description"></div>
+      </div>
+
       <label for="roundsInput">Количество тестов</label>
       <input id="roundsInput" type="number" min="10" max="300" value="80">
 
+      <div class="controls-row">
+        <button id="hintBtn" type="button">Подсказка</button>
+        <button id="startTestBtn" type="button">Начать тест</button>
+      </div>
+      <button id="nextTaskBtn" type="button" class="secondary-btn" disabled>Следующая задача теста</button>
+
       <button id="runBtn">Проверить</button>
+      <p id="testInfo" class="hint"></p>
       <p class="hint">Подключены все задачи из zach.py (1-79).</p>
     </section>
 
     <section class="panel editor-panel">
       <label for="codeInput">Твой код</label>
-      <textarea id="codeInput" spellcheck="false"></textarea>
+      <textarea id="codeInput" spellcheck="false" wrap="off"></textarea>
     </section>
 
     <section class="panel result-panel">

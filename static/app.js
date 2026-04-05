@@ -1,12 +1,67 @@
 const taskSelect = document.getElementById("taskSelect");
 const taskSignature = document.getElementById("taskSignature");
 const taskLimit = document.getElementById("taskLimit");
+const taskDescription = document.getElementById("taskDescription");
 const roundsInput = document.getElementById("roundsInput");
 const codeInput = document.getElementById("codeInput");
 const resultOutput = document.getElementById("resultOutput");
 const runBtn = document.getElementById("runBtn");
+const hintBtn = document.getElementById("hintBtn");
+const startTestBtn = document.getElementById("startTestBtn");
+const nextTaskBtn = document.getElementById("nextTaskBtn");
+const testInfo = document.getElementById("testInfo");
 
 let tasks = [];
+let testSession = null;
+
+function randomInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function shuffle(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i -= 1) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function buildHint(task) {
+  const t = (task.title || "").toLowerCase();
+  if (task.task_kind === "class") {
+    return "Начни с структуры хранения состояния: стек, очередь или массивы истории. Затем реализуй каждый метод отдельно и проверь крайние случаи (пустая структура, один элемент).";
+  }
+  if (t.includes("префикс")) return "Подумай о массиве pi и откате по pi[j - 1], когда символы не совпадают.";
+  if (t.includes("z‑функции") || t.includes("z-функции")) return "Держи окно [l, r] и используй уже посчитанные значения для ускорения.";
+  if (t.includes("циклическим сдвигом")) return "Проверь длины строк, затем ищи одну строку внутри удвоенной другой.";
+  if (t.includes("простым")) return "Проверять делители достаточно до sqrt(n), отдельно обработай n < 2 и чётные числа.";
+  if (t.includes("нод") || t.includes("делитель")) return "Используй алгоритм Евклида: пока b != 0, делай a, b = b, a % b.";
+  return "Разбей задачу на шаги: корректность на крайних случаях, затем оптимизация под лимит времени.";
+}
+
+function getCurrentTask() {
+  const id = Number(taskSelect.value);
+  return tasks.find((t) => t.id === id) || null;
+}
+
+function updateTestUi() {
+  if (!testSession) {
+    testInfo.textContent = "";
+    nextTaskBtn.disabled = true;
+    return;
+  }
+  testInfo.textContent = `Тест запущен: задача ${testSession.index + 1} из ${testSession.ids.length}`;
+  nextTaskBtn.disabled = testSession.index >= testSession.ids.length - 1;
+}
+
+function setTaskById(taskId) {
+  taskSelect.value = String(taskId);
+  const task = tasks.find((t) => t.id === taskId);
+  if (task) {
+    showTask(task);
+  }
+}
 
 function templateForSignature(signature) {
   const raw = signature.startsWith("solution") ? signature.slice("solution".length) : "(...)";
@@ -35,6 +90,7 @@ function templateForClass(name) {
 function showTask(task) {
   taskSignature.textContent = `Сигнатура: ${task.signature}`;
   taskLimit.textContent = `Лимит на 1 тест: ${task.time_limit_ms} ms`;
+  taskDescription.textContent = task.description || "Описание задачи не найдено.";
   if (task.task_kind === "class") {
     codeInput.value = templateForClass(task.entry_name);
   } else {
@@ -65,7 +121,47 @@ taskSelect.addEventListener("change", () => {
   const task = tasks.find((t) => t.id === id);
   if (task) {
     showTask(task);
+    if (testSession) {
+      const idx = testSession.ids.indexOf(id);
+      if (idx >= 0) {
+        testSession.index = idx;
+      } else {
+        testSession = null;
+      }
+      updateTestUi();
+    }
   }
+});
+
+hintBtn.addEventListener("click", () => {
+  const task = getCurrentTask();
+  if (!task) return;
+  resultOutput.textContent = `Подсказка:\n${buildHint(task)}`;
+});
+
+startTestBtn.addEventListener("click", () => {
+  if (!tasks.length) return;
+  const maxCount = Math.min(8, tasks.length);
+  const minCount = Math.min(3, maxCount);
+  const count = randomInt(minCount, maxCount);
+  const ids = shuffle(tasks.map((t) => t.id)).slice(0, count);
+
+  testSession = { ids, index: 0 };
+  setTaskById(ids[0]);
+  resultOutput.textContent = `Тест начат.\nСлучайно выбрано задач: ${count}.\nРешай по очереди, кнопка \"Следующая задача теста\" переведет к следующей.`;
+  updateTestUi();
+});
+
+nextTaskBtn.addEventListener("click", () => {
+  if (!testSession) return;
+  if (testSession.index >= testSession.ids.length - 1) {
+    resultOutput.textContent = "Тест завершен: все случайные задачи пройдены.";
+    return;
+  }
+  testSession.index += 1;
+  setTaskById(testSession.ids[testSession.index]);
+  resultOutput.textContent = `Переход к задаче ${testSession.index + 1} из ${testSession.ids.length}.`;
+  updateTestUi();
 });
 
 runBtn.addEventListener("click", async () => {
@@ -92,6 +188,10 @@ runBtn.addEventListener("click", async () => {
         `Мин время: ${data.timing.min_ms} ms`,
         `Лимит: ${data.timing.limit_ms} ms`,
       ].join("\n");
+
+      if (testSession && testSession.ids[testSession.index] === id && testSession.index < testSession.ids.length - 1) {
+        resultOutput.textContent += "\n\nЗадача в тест-сессии пройдена. Нажми \"Следующая задача теста\".";
+      }
       return;
     }
 
