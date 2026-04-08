@@ -219,7 +219,7 @@ def solution(s: str) -> int:
 '''13. Дан односвязный список. Разверните его задом наперёд. Разворот должен выполняться на месте (in‑place), без создания новых узлов.​'''
 class ListNode:
     def __init__(self, val=0, next=None):
-        self.val = val
+        self.val 
         self.next = next
 
 def solution(head: ListNode) -> ListNode:
@@ -1445,7 +1445,7 @@ def solution(nums: list[int], queries: list[tuple[int, int]]) -> list[int]:
     return results
 
 
-'''79. Дан неориентированный граф, заданный списком смежности. Найдите все мосты графа.
+'''79.  
 Мост — это ребро, удаление которого увеличивает количество компонент связности.'''
 def solution(graph: dict[int, list[int]], n: int) -> list[tuple[int, int]]:
     tin = [-1] * n

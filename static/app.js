@@ -10,6 +10,8 @@ const resultOutput = document.getElementById("resultOutput");
 const runBtn = document.getElementById("runBtn");
 const hintBtn = document.getElementById("hintBtn");
 const startTestBtn = document.getElementById("startTestBtn");
+const startEasyTestBtn = document.getElementById("startEasyTestBtn");
+const startHardTestBtn = document.getElementById("startHardTestBtn");
 const nextTaskBtn = document.getElementById("nextTaskBtn");
 const testInfo = document.getElementById("testInfo");
 
@@ -17,6 +19,12 @@ let tasks = [];
 let testSession = null;
 let editor = null;
 let syntaxTimer = null;
+
+// Все задачи, не попавшие в этот список, автоматически считаются легкими.
+const HARD_TASK_IDS = new Set([
+  5, 6, 9, 10, 11, 12, 21, 22, 23, 30, 31, 34, 36, 43, 44, 46, 47, 48, 49,
+  50, 51, 52, 53, 54, 66, 67, 69, 70, 71, 74, 75, 76, 77, 78, 79,
+]);
 
 function initEditor() {
   if (!window.ace || !codeEditorEl) {
@@ -154,7 +162,8 @@ function updateTestUi() {
     nextTaskBtn.disabled = true;
     return;
   }
-  testInfo.textContent = `Тест запущен: задача ${testSession.index + 1} из ${testSession.ids.length}`;
+  const modeLabel = testSession.modeLabel || "все";
+  testInfo.textContent = `Тест (${modeLabel}) запущен: задача ${testSession.index + 1} из ${testSession.ids.length}`;
   nextTaskBtn.disabled = testSession.index >= testSession.ids.length - 1;
 }
 
@@ -201,6 +210,36 @@ function showTask(task) {
   }
 }
 
+function getTaskIdsByMode(mode) {
+  if (mode === "hard") {
+    return tasks.filter((t) => HARD_TASK_IDS.has(t.id)).map((t) => t.id);
+  }
+  if (mode === "easy") {
+    return tasks.filter((t) => !HARD_TASK_IDS.has(t.id)).map((t) => t.id);
+  }
+  return tasks.map((t) => t.id);
+}
+
+function startTest(mode = "all") {
+  if (!tasks.length) return;
+
+  const requested = Number(testTaskCountInput.value || 5);
+  const pool = getTaskIdsByMode(mode);
+  if (!pool.length) {
+    resultOutput.textContent = "Для выбранной категории нет задач.";
+    return;
+  }
+
+  const count = Math.max(1, Math.min(pool.length, requested));
+  const ids = shuffle(pool).slice(0, count);
+  const modeLabel = mode === "easy" ? "легкие" : mode === "hard" ? "сложные" : "все";
+
+  testSession = { ids, index: 0, mode, modeLabel };
+  setTaskById(ids[0]);
+  resultOutput.textContent = `Тест начат (${modeLabel}).\nСлучайно выбрано задач: ${count}.\nРешай по очереди, кнопка \"Следующая задача теста\" переведет к следующей.`;
+  updateTestUi();
+}
+
 async function loadTasks() {
   const res = await fetch("/api/tasks");
   const data = await res.json();
@@ -243,15 +282,15 @@ hintBtn.addEventListener("click", () => {
 });
 
 startTestBtn.addEventListener("click", () => {
-  if (!tasks.length) return;
-  const requested = Number(testTaskCountInput.value || 5);
-  const count = Math.max(1, Math.min(tasks.length, requested));
-  const ids = shuffle(tasks.map((t) => t.id)).slice(0, count);
+  startTest("all");
+});
 
-  testSession = { ids, index: 0 };
-  setTaskById(ids[0]);
-  resultOutput.textContent = `Тест начат.\nСлучайно выбрано задач: ${count}.\nРешай по очереди, кнопка \"Следующая задача теста\" переведет к следующей.`;
-  updateTestUi();
+startEasyTestBtn.addEventListener("click", () => {
+  startTest("easy");
+});
+
+startHardTestBtn.addEventListener("click", () => {
+  startTest("hard");
 });
 
 nextTaskBtn.addEventListener("click", () => {

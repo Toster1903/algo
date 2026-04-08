@@ -159,6 +159,19 @@ textarea {
   margin-top: 0.9rem;
 }
 
+.category-row {
+  margin-top: 0.6rem;
+}
+
+.category-btn {
+  margin-top: 0;
+  background: #4b6274;
+}
+
+.category-btn:hover {
+  background: #354a5a;
+}
+
 .secondary-btn {
   background: #385f57;
 }
